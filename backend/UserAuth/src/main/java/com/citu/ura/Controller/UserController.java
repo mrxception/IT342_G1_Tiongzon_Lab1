@@ -20,52 +20,45 @@ public class UserController {
     @Autowired
     private JwtUtils jwtService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    public UserController(UserRepository userRepository){
-        this.userRepository = userRepository;
-    }
+    public UserController (UserRepository userRepository){ this.userRepository = userRepository; }
 
     @GetMapping
-    public List<User> getAllUser(){
-        return userRepository.findAll();
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user){
-        var userFound = userRepository.findByUsername(user.getUsername());
-        if (userFound.isPresent()){
-            if (passwordEncoder.matches(user.getPassword(), userFound.get().getPassword())){
-                String token = jwtService.generateToken(userFound.get().getUsername());
-                return ResponseEntity.ok(Map.of("token", token));
-            }
-            else{
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid credentials!"));
-            }
+    public ResponseEntity<?> getAllUser(@RequestHeader("Authorization") String authorizationHeader){
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("message", "Missing or invalid Authorization header"));
         }
 
-        return ResponseEntity.badRequest().body(Map.of("message", "Username not found!"));
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user){
-        if (userRepository.existsByUsername(user.getUsername())){
-            return ResponseEntity.badRequest().body(Map.of("message", "Username already exists!"));
+        String token = authorizationHeader.substring(7);
+        try {
+            jwtService.extractUsername(token);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("message", "Invalid token"));
         }
 
-        if (userRepository.existsByEmail(user.getEmail())){
-            return ResponseEntity.badRequest().body(Map.of("message", "Email already exists!"));
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("message", "Registration success!"));
+        return ResponseEntity.ok(userRepository.findAll());
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(@PathVariable Long userId){
+    public ResponseEntity<?> getUserById(@PathVariable Long userId, @RequestHeader("Authorization") String authorizationHeader){
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("message", "Missing or invalid Authorization header"));
+        }
+
+        String token = authorizationHeader.substring(7);
+        try {
+            jwtService.extractUsername(token);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("message", "Invalid token"));
+        }
+
         return userRepository.findByUserId(userId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
