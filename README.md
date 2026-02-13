@@ -69,8 +69,8 @@ This project implements **user registration and authentication** using **Spring 
 
 | Method | Endpoint              | Description                       | Protected |
 | ------ | --------------------- | --------------------------------- | --------- |
-| POST   | `/api/users/register` | Register a new user               | No        |
-| POST   | `/api/users/login`    | Log in with username and password | No        |
+| POST   | `/api/auth/register`  | Register a new user               | No        |
+| POST   | `/api/auth/login`     | Log in with username and password | No        |
 | GET    | `/api/users/me`       | Get logged-in user profile        | Yes       |
 | GET    | `/api/users/{userId}` | Get user info by ID               | Yes       |
 | GET    | `/api/users`          | List all users                    | Yes       |
